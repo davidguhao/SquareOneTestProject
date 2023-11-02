@@ -5,7 +5,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
@@ -22,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
@@ -51,7 +55,6 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // Greeting("Android")
                     Main(vm)
                 }
             }
@@ -66,16 +69,26 @@ fun Main(vm: MainViewModel) {
 
             var showDetails by remember { mutableStateOf(false) }
 
-            Dialog(onDismissRequest = { showDetails = false }) {
+            if(showDetails) Dialog(onDismissRequest = { showDetails = false }) {
                 Card {
-                    AsyncImage(
-                        model = movie.poster.create(LocalContext.current),
-                        contentDescription = null
-                    )
-                    Text(text = movie.name)
-                    Text(text = movie.overview)
-                    Text(text = movie.releaseDate)
-                    Text(text = movie.genresList.contentToString())
+                    LazyColumn {
+                        item {
+                            Column {
+                                AsyncImage(
+                                    model = movie.poster.create(LocalContext.current),
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+
+                                Text(text = movie.name)
+                                Text(text = movie.overview)
+                                Text(text = movie.releaseDate)
+                                Text(text = movie.genresList.contentToString())
+                            }
+                        }
+
+                    }
+
                 }
                 movie.name
             }
@@ -105,9 +118,6 @@ class MovieDetail(
                 .addHeader("accept", "application/json")
                 .addHeader("Authorization", "Bearer $authToken")
                 .data(url)
-                .target { drawable ->
-                    // Handle the result.
-                }
                 .build()
 
         }
@@ -123,20 +133,4 @@ class MainViewModel(useCase: UseCase) : ViewModel() {
 
     val movies = useCase.getMovies().stateIn(
         viewModelScope, SharingStarted.Lazily, listOf())
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    SquareOneTestProjectTheme {
-        Greeting("Android")
-    }
 }
