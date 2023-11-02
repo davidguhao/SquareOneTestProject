@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -22,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -61,10 +64,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Main(vm: MainViewModel) {
     val movies by vm.movies.collectAsStateWithLifecycle()
-    LazyColumn {
+    LazyColumn(modifier = Modifier.padding(horizontal = 10.dp)) {
         items(movies) { movie ->
 
             var showDetails by remember { mutableStateOf(false) }
@@ -92,9 +96,19 @@ fun Main(vm: MainViewModel) {
                 }
                 movie.name
             }
-            TextButton(onClick = { showDetails = true }) {
-                Text(text = movie.name)
+            Card(
+                modifier = Modifier.padding(10.dp),
+                onClick = { showDetails = true} ) {
+                AsyncImage(
+                    model = movie.poster.create(LocalContext.current),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Text(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    text = movie.name)
             }
+
         }
     }
 }
@@ -109,6 +123,11 @@ class MovieDetail(
     val overview: String,
     val releaseDate: String
 ) {
+    /**
+     * It could be useless to create a factory for this feature, but
+     * at the very first I thought I have to carry the authorization header so I
+     * made this class to provide advanced features. But it does not have any security checks...
+     */
     class ImageRequestFactory(
         private val url: String,
         private val authToken: String
