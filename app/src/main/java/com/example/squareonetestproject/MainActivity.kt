@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,8 +20,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -65,17 +69,17 @@ fun Main(vm: MainViewModel) {
     val listState = rememberLazyListState()
     LazyColumn(modifier = Modifier.padding(horizontal = 10.dp), state = listState) {
         items(movies) { movie ->
-            val context = LocalContext.current.applicationContext
+            val context = LocalContext.current
             Card(
                 modifier = Modifier
                     .padding(10.dp)
                     .fillMaxWidth(),
                 onClick = {
                     context.startActivity(
-                        Intent().apply {
+                        Intent(context, DetailActivity::class.java).apply {
                             putExtra("name", movie.name)
                             putExtra("overview", movie.overview)
-                            putExtra("backdrop", movie.backdrop)
+                            putExtra("backdropUrl", movie.backdrop.url)
                             putExtra("releaseDate", movie.releaseDate)
                             putExtra("genresList", movie.genresList.toTypedArray())
                         }
@@ -93,22 +97,28 @@ fun Main(vm: MainViewModel) {
                     text = movie.name)
             }
 
+            listState.checkingScroll(vm::loadMoreMovies)
         }
-    }
-    
-    LaunchedEffect(key1 = listState) {
-        listState.onScrollToEnd(vm::loadMoreMovies)
+
+        item {
+            Box(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+                Text(
+                    modifier = Modifier.align(Alignment.Center),
+                    text = "Loading...")
+            }
+
+        }
     }
 }
 
-fun LazyListState.onScrollToEnd(onScrollNearEnd: () -> Unit) {
+fun LazyListState.checkingScroll(onScrollToEnd: (Int) -> Unit) {
     val layoutInfo = layoutInfo
     val visibleItems = layoutInfo.visibleItemsInfo
 
     if(layoutInfo.totalItemsCount - visibleItems.size > 0) { // If there are not enough space to show all of items.
         // To the end of bottom
         if (visibleItems.last().index == layoutInfo.totalItemsCount - 1) {
-            onScrollNearEnd()
+            onScrollToEnd(layoutInfo.totalItemsCount)
         }
     }
 
@@ -132,9 +142,9 @@ class MovieDetail(
      * made this class to provide advanced features. But it does not have any security checks...
      */
     class ImageRequestFactory(
-        private val url: String,
+        val url: String,
         // private val authToken: String
-    ): Serializable {
+    ) {
         fun create(context: Context): ImageRequest {
             return ImageRequest.Builder(context)
                 .addHeader("accept", "application/json")
@@ -147,8 +157,12 @@ class MovieDetail(
 }
 
 class MainViewModel @Inject constructor(private val useCase: UseCase) : ViewModel() {
-    fun loadMoreMovies() {
+    private var originalNum: Int = 0
+    fun loadMoreMovies(currentNum: Int) {
+        if(originalNum == currentNum) return
+
         useCase.loadMoreMovies()
+        originalNum = currentNum
     }
 
     val movies = useCase.getMovies().stateIn(

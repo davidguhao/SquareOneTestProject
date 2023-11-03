@@ -33,9 +33,11 @@ class UpcomingMoviesResFromNetwork(
     )
 }
 
-class MovieRepository {
-    @Inject
-    lateinit var tmdb: TMDBapiInterface
+class MovieRepository @Inject constructor() {
+    private val tmdb = TMDBapi.api
+
+//    val tmdb: TMDBapiInterface = DaggerMovieRepoComponent.create()
+//    DaggerMovieRepoComponent
     private suspend fun List<UpcomingMoviesResFromNetwork.MovieEntity>.entityToDetail(): List<MovieDetail> = map {
         MovieDetail(
             name = it.title,
