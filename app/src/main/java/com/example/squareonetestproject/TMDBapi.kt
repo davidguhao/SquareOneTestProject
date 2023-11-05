@@ -5,6 +5,8 @@ import dagger.Provides
 import dagger.hilt.DefineComponent
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
@@ -44,6 +46,8 @@ interface TMDBapiInterface {
 object TMDBapi {
     val api: TMDBapiInterface = Retrofit.Builder()
         .baseUrl("https://api.themoviedb.org/")
+        // With highest level to see everything.
+        .client(OkHttpClient.Builder().addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY)).build())
         .addConverterFactory(GsonConverterFactory.create())
         .build().create(TMDBapiInterface::class.java)
 }

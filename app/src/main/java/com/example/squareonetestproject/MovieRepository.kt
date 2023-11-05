@@ -3,6 +3,7 @@ package com.example.squareonetestproject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
@@ -103,6 +104,9 @@ class MovieRepository @Inject constructor() {
                 }
                 emit(result)
             }
+
+            delay(2000) // After adding logging, I realize it generates too many requests.
+            // It is not that necessary to keep up with high speed.
         }
 
     }
